@@ -3,15 +3,22 @@ import fastapi
 import fastapi.responses
 import fastapi.staticfiles
 from pipeline_search import checkers_product_search, pnp_product_search, woolworths_product_search
+import os
 
 app = fastapi.FastAPI()
 
-app.mount(
-    "/static",
-    fastapi.staticfiles.StaticFiles(directory="static"),
-    name="static",
-)
+# app.mount(
+#     "/static",
+#     fastapi.staticfiles.StaticFiles(directory="static"),
+#     name="static",
+# )
 
+if os.path.exists("static"):
+    app.mount(
+        "/static",
+        fastapi.staticfiles.StaticFiles(directory="static"),
+        name="static",
+    )
 
 @app.get("/", response_class=fastapi.responses.HTMLResponse)
 def index():
