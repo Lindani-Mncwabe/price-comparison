@@ -3,17 +3,24 @@ from typing import Final
 import fastapi
 import fastapi.responses
 import fastapi.staticfiles
+import os
 
 from src.vendor import checkers, picknpay, woolworths
 
 app = fastapi.FastAPI()
 
-app.mount(
-    "/static",
-    fastapi.staticfiles.StaticFiles(directory="static"),
-    name="static",
-)
+# app.mount(
+#     "/static",
+#     fastapi.staticfiles.StaticFiles(directory="static"),
+#     name="static",
+# )
 
+if os.path.exists("static"):
+    app.mount(
+        "/static",
+        fastapi.staticfiles.StaticFiles(directory="static"),
+        name="static",
+    )
 
 @app.get("/", response_class=fastapi.responses.HTMLResponse)
 def index():
