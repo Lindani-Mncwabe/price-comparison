@@ -1,10 +1,8 @@
 from typing import Final
-
 import fastapi
 import fastapi.responses
 import fastapi.staticfiles
-
-from src.vendor import checkers, picknpay, woolworths
+from pipeline_search import checkers_product_search, pnp_product_search, woolworths_product_search
 
 app = fastapi.FastAPI()
 
@@ -30,21 +28,21 @@ def product_search(
     search_results: dict = {
         "checkers": [
             x.model_dump()
-            for x in checkers.product_search(
+            for x in checkers_product_search(
                 user_query=query,
                 max_n_items=MAX_N_ITEMS,
             )
         ],
         "picknpay": [
             x.model_dump()
-            for x in picknpay.product_search(
+            for x in pnp_product_search(
                 user_query=query,
                 max_n_items=MAX_N_ITEMS,
             )
         ],
         "woolworths": [
             x.model_dump()
-            for x in woolworths.product_search(
+            for x in woolworths_product_search(
                 user_query=query,
                 max_n_items=MAX_N_ITEMS,
             )
