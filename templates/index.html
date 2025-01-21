@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Price Comparison</title>
+    <!-- <link rel="stylesheet" href="static/styles.css"> -->
+    <style>
+        .product-section {
+            margin-bottom: 20px;
+        }
+        .product-item {
+            display: inline-block;
+            text-align: center;
+            margin: 10px;
+            vertical-align: top;
+        }
+        .product-item img {
+            max-width: 300px;
+            max-height: 150px;
+            height: auto;
+        }
+        .product-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+        }
+    </style>
+</head>
+
+<body>
+    <form id="searchForm">
+        <input type="text" id="searchQueryInput" name="searchQuery" value="search keywords here" required>
+        <button type="submit">Search</button>
+    </form>
+    <div id="searchResult"></div>
+    <script>
+        document.getElementById("searchForm").addEventListener("submit", async function (event) {
+            event.preventDefault(); // Prevent form submission from reloading the page
+            const searchQuery = document.getElementById("searchQueryInput").value.trim();
+
+            const response = await fetch(
+                `http://0.0.0.0:8000/product-search?query=${encodeURIComponent(searchQuery)}`
+            );
+            if (!response.ok) {
+                document.getElementById("searchResult").textContent = "Error fetching search results.";
+                return;
+            }
+            const jsonResponse = await response.json();
+            // document.getElementById("searchResult").textContent = JSON.stringify(jsonResponse, null, 2);
+            const searchResultContainer = document.getElementById("searchResult");
+            searchResultContainer.innerHTML = "";
+
+                        for (const [store, items] of Object.entries(jsonResponse)) {
+                const section = document.createElement("div");
+                section.className = "product-section";
+
+                const heading = document.createElement("h1");
+                heading.textContent = store;
+                section.appendChild(heading);
+
+                const grid = document.createElement("div");
+                grid.className = "product-grid";
+
+                items.forEach(item => {
+                    const itemDiv = document.createElement("div");
+                    itemDiv.className = "product-item";
+
+                    const img = document.createElement("img");
+                    img.src = item.item_image_url;
+                    img.alt = item.item_title;
+                    itemDiv.appendChild(img);
+
+                    const title = document.createElement("div");
+                    title.textContent = item.item_title;
+                    itemDiv.appendChild(title);
+
+                    const price = document.createElement("div");
+                    price.textContent = `R${(item.price_cents / 100).toFixed(2)}`;
+                    itemDiv.appendChild(price);
+
+                    grid.appendChild(itemDiv);
+                });
+
+                section.appendChild(grid);
+                searchResultContainer.appendChild(section);
+            }
+        });
+    </script>
+</body>
