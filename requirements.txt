@@ -1,0 +1,4 @@
+beautifulsoup4>=4.12.3
+fastapi[standard]>=0.115.6
+pydantic>=2.9.2
+requests>=2.32.3
