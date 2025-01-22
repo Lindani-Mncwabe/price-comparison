@@ -1,91 +1,213 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Price Comparison</title>
-    <!-- <link rel="stylesheet" href="static/styles.css"> -->
+    <title>SA Price Comparison</title>
     <style>
-        .product-section {
-            margin-bottom: 20px;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .product-item {
-            display: inline-block;
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #f5f5f5;
+        }
+
+        header {
             text-align: center;
-            margin: 10px;
-            vertical-align: top;
+            margin-bottom: 30px;
         }
-        .product-item img {
-            max-width: 300px;
-            max-height: 150px;
-            height: auto;
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
         }
-        .product-grid {
+
+        .search-container {
             display: flex;
-            flex-wrap: wrap;
-            justify-content: flex-start;
+            gap: 10px;
+            max-width: 600px;
+            margin: 0 auto 30px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 12px 24px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+
+        .results-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            padding: 20px 0;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .store-name {
+            color: #e74c3c;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .product-image {
+            width: 100%;
+            height: 200px;
+            object-fit: contain;
+            margin-bottom: 10px;
+        }
+
+        .product-title {
+            font-size: 1em;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            height: 3em;
+            overflow: hidden;
+        }
+
+        .product-price {
+            font-size: 1.2em;
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .error {
+            color: #e74c3c;
+            text-align: center;
+            padding: 20px;
+            display: none;
         }
     </style>
 </head>
-
 <body>
-    <form id="searchForm">
-        <input type="text" id="searchQueryInput" name="searchQuery" value="search keywords here" required>
-        <button type="submit">Search</button>
-    </form>
-    <div id="searchResult"></div>
+    <header>
+        <h1>SA Price Comparison</h1>
+        <p>Compare prices across Checkers, Pick n Pay, and Woolworths</p>
+    </header>
+
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Search for products (e.g., bread, milk, eggs)">
+        <button onclick="searchProducts()">Search</button>
+    </div>
+
+    <div id="loading" class="loading">Searching products...</div>
+    <div id="error" class="error"></div>
+    <div id="results" class="results-container"></div>
+
     <script>
-        document.getElementById("searchForm").addEventListener("submit", async function (event) {
-            event.preventDefault(); // Prevent form submission from reloading the page
-            const searchQuery = document.getElementById("searchQueryInput").value.trim();
+        // Your Render API URL
+        const API_URL = 'https://price-comparison-fayu.onrender.com';
 
-            const response = await fetch(
-                `http://0.0.0.0:8000/product-search?query=${encodeURIComponent(searchQuery)}`
-            );
-            if (!response.ok) {
-                document.getElementById("searchResult").textContent = "Error fetching search results.";
-                return;
-            }
-            const jsonResponse = await response.json();
-            // document.getElementById("searchResult").textContent = JSON.stringify(jsonResponse, null, 2);
-            const searchResultContainer = document.getElementById("searchResult");
-            searchResultContainer.innerHTML = "";
-
-                        for (const [store, items] of Object.entries(jsonResponse)) {
-                const section = document.createElement("div");
-                section.className = "product-section";
-
-                const heading = document.createElement("h1");
-                heading.textContent = store;
-                section.appendChild(heading);
-
-                const grid = document.createElement("div");
-                grid.className = "product-grid";
-
-                items.forEach(item => {
-                    const itemDiv = document.createElement("div");
-                    itemDiv.className = "product-item";
-
-                    const img = document.createElement("img");
-                    img.src = item.item_image_url;
-                    img.alt = item.item_title;
-                    itemDiv.appendChild(img);
-
-                    const title = document.createElement("div");
-                    title.textContent = item.item_title;
-                    itemDiv.appendChild(title);
-
-                    const price = document.createElement("div");
-                    price.textContent = `R${(item.price_cents / 100).toFixed(2)}`;
-                    itemDiv.appendChild(price);
-
-                    grid.appendChild(itemDiv);
-                });
-
-                section.appendChild(grid);
-                searchResultContainer.appendChild(section);
+        // Add event listener for Enter key
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchProducts();
             }
         });
+
+        async function searchProducts() {
+            const query = document.getElementById('searchInput').value.trim();
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            const resultsDiv = document.getElementById('results');
+
+            if (!query) {
+                errorDiv.textContent = 'Please enter a search term';
+                errorDiv.style.display = 'block';
+                loadingDiv.style.display = 'none';
+                resultsDiv.innerHTML = '';
+                return;
+            }
+
+            loadingDiv.style.display = 'block';
+            errorDiv.style.display = 'none';
+            resultsDiv.innerHTML = '';
+
+            try {
+                const response = await fetch(`${API_URL}/product-search?query=${encodeURIComponent(query)}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    let html = '';
+                    let hasResults = false;
+
+                    for (const [store, products] of Object.entries(data)) {
+                        if (products.length > 0) {
+                            hasResults = true;
+                            products.forEach(product => {
+                                html += `
+                                    <div class="product-card">
+                                        <div class="store-name">${store}</div>
+                                        <img class="product-image" src="${product.item_image_url}" 
+                                             alt="${product.item_title}" 
+                                             onerror="this.src='https://via.placeholder.com/200x200?text=No+Image'">
+                                        <div class="product-title">${product.item_title}</div>
+                                        <div class="product-price">R${(product.price_cents / 100).toFixed(2)}</div>
+                                    </div>
+                                `;
+                            });
+                        }
+                    }
+
+                    if (!hasResults) {
+                        errorDiv.textContent = 'No products found for your search';
+                        errorDiv.style.display = 'block';
+                    }
+
+                    resultsDiv.innerHTML = html;
+                } else {
+                    throw new Error('Failed to fetch results');
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Error searching products. Please try again later.';
+                errorDiv.style.display = 'block';
+                console.error('Search error:', error);
+            } finally {
+                loadingDiv.style.display = 'none';
+            }
+        }
     </script>
 </body>
+</html>
